@@ -15,5 +15,6 @@
     "couchbase": "^4.4.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2"
-  }
+  },
+  "devDependencies": {}
 }
