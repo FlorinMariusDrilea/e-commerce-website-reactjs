@@ -15,7 +15,7 @@ const ProductDetail = () => {
         }, [id]);
     
     if (!product) {
-        return <div>Loading...</div>;
+        return <div>Loading..</div>;
     }
 
     return (
