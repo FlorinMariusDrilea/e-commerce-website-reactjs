@@ -5,6 +5,9 @@ import ProductList from "./components/ProductList";
 import ProductDetail from "./components/ProductDetail";
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import TermsAndConditions from './pages/policies/TermsAndConds';
+import PrivacyPolicy from './pages/policies/PrivacyPolicy';
+import CookiePolicy from './pages/policies/CookiePolicy';
 
 function App() {
   return (
@@ -13,6 +16,10 @@ function App() {
         <Navbar />
         <main className="container mx-auto p-4 flex-grow">
           <Routes>
+            <Route path="/policies/terms-and-conditions" element={<TermsAndConditions />} />
+            <Route path="/policies/cookie-policy" element={<CookiePolicy />} />
+            <Route path="/policies/privacy-policy" element={<PrivacyPolicy />} />
+            
             <Route path="/" element={<ProductList />} />
             <Route path="/product/:id" element={<ProductDetail />} />
             <Route path="/about" element={<h2>About Us</h2>} />
