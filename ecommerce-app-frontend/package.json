@@ -9,6 +9,7 @@
     "@types/react": "^18.3.18",
     "axios": "^1.7.9",
     "lucide-react": "^0.475.0",
+    "js-cookie": "^3.0.5",
     "postcss-selector-parser": "^6.1.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

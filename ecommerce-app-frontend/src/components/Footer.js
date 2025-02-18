@@ -1,9 +1,12 @@
-import React from "react";
+import React, { useState } from "react";
 import { FaFacebook, FaInstagram, FaTwitter, FaYoutube } from "react-icons/fa";
+import CookieConsent from "./CookieConstant";
 
 function Footer() {
+  const [showCookieModal, setShowCookieModal] = useState(false); // Manage cookie modal state
+
   return (
-    <footer className="bg-gray-900 text-white mt-10">
+    <footer className="bg-gray-900 text-white mt-10 relative">
       <div className="container mx-auto py-10 px-6 grid grid-cols-1 md:grid-cols-3 gap-8">
         {/* Column 1 */}
         <div>
@@ -46,6 +49,19 @@ function Footer() {
       <div className="text-center text-gray-300 text-sm py-4 border-t border-gray-800">
         © {new Date().getFullYear()}, GymPanda Official Store
       </div>
+
+      {/* Fixed Manage Cookie Preferences Button */}
+      <div className="fixed bottom-4 right-4 z-50">
+        <button 
+          onClick={() => setShowCookieModal(true)} 
+          className="px-4 py-2 text-sm bg-gray-800 text-white rounded-full shadow-md hover:bg-gray-700 transition flex items-center"
+        >
+          <span className="mr-2">Manage Cookies</span> 🍪
+        </button>
+      </div>
+
+      {/* Cookie Consent Modal */}
+      <CookieConsent showModal={showCookieModal} setShowModal={setShowCookieModal} />
     </footer>
   );
 }
