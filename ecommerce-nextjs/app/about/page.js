@@ -6,12 +6,12 @@ const About = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       {/* Header Section */}
-      <div className="text-center mb-16">
+      <div className="text-center mb-16" >
         <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-4">
           Welcome to GymPanda
         </h1>
         <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-          GymPanda is more than just apparel; it's a lifestyle. Our purpose is to empower fitness enthusiasts, from beginners to pros, to push boundaries and perform at their best with top-quality gear that motivates.
+          GymPanda is more than just apparel, it's a lifestyle. Our purpose is to empower fitness enthusiasts, from beginners to pros, to push boundaries and perform at their best with top-quality gear that motivates.
         </p>
       </div>
 

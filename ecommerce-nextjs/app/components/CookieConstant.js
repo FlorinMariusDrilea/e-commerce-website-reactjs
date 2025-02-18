@@ -2,7 +2,14 @@
 
 import React, { useState, useEffect } from "react";
 
-const CookieConsent = ({ showModal, setShowModal }) => {
+const CookieConsent = ({ showModal: propShowModal, setShowModal: propSetShowModal }) => {
+  // Local state fallback
+  const [localShowModal, setLocalShowModal] = useState(false);
+
+  // Determine which state to use (prop or local state)
+  const showModal = propShowModal ?? localShowModal;
+  const setShowModal = propSetShowModal ?? setLocalShowModal;
+
   // State to manage cookie preferences
   const [preferences, setPreferences] = useState({
     essential: true,
