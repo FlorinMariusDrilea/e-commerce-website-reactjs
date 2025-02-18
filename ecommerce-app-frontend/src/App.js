@@ -8,6 +8,7 @@ import Footer from './components/Footer';
 import TermsAndConditions from './pages/policies/TermsAndConds';
 import PrivacyPolicy from './pages/policies/PrivacyPolicy';
 import CookiePolicy from './pages/policies/CookiePolicy';
+import Contact from './pages/ContactPage';
 
 function App() {
   return (
@@ -23,7 +24,7 @@ function App() {
             <Route path="/" element={<ProductList />} />
             <Route path="/product/:id" element={<ProductDetail />} />
             <Route path="/about" element={<h2>About Us</h2>} />
-            <Route path="/contact" element={<h2>Contact Us</h2>} />
+            <Route path="/contact" element={<Contact />} />
           </Routes>
         </main>
         <Footer />
