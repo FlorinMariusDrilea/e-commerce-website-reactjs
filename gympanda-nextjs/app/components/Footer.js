@@ -9,6 +9,8 @@ export default function Footer() {
   const [isBrowser, setIsBrowser] = useState(false);
   const [showCookieModal, setShowCookieModal] = useState(false);
   const [currentYear, setCurrentYear] = useState(null);  // State for dynamic year
+  const [email, setEmail] = useState('');
+  const [message, setMessage] = useState('');
 
   useEffect(() => {
     // Check if we are in the browser environment
@@ -32,6 +34,34 @@ export default function Footer() {
 
   // Check if the current route is the cookie policy page
   const isCookiePolicyPage = isBrowser && window.location.pathname === '/policies/cookie-policy';
+
+  const handleEmailSubscribe = async (e) => {
+    e.preventDefault();
+    if (!email) {
+      setMessage('Please enter a valid email!');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/subscribe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+      
+      const data = await res.json();
+      if (res.ok) {
+        setMessage("Subscribed successfully!");
+        setEmail('');
+      } else {
+        setMessage(data.error || "Subscription failed!");
+      }
+    } catch (error) {
+      setMessage("An error occurred. Please try again later.");
+    }
+  };
 
   return (
     <footer className="bg-gray-900 text-white relative">
@@ -84,11 +114,14 @@ export default function Footer() {
         <div>
           <h3 className="text-lg font-semibold uppercase">Follow Us</h3>
           <p className="mt-4 text-gray-300">Get updates on new arrivals and offers.</p>
-          <form className="mt-3">
+          <form onSubmit={handleEmailSubscribe} className="mt-3">
             <input 
-              type="email" 
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)} 
               placeholder="Enter your email" 
               className="w-full p-2 rounded bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
             />
             <button 
               type="submit"
@@ -97,6 +130,7 @@ export default function Footer() {
               Subscribe
             </button>
           </form>
+          {message && <p className="mt-2 text-sm text-gray-300">{message}</p>}
           <div className="mt-4 flex justify-end space-x-6 text-gray-300">
             <Link href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="hover:text-white transition">
               <Facebook size={20} />
