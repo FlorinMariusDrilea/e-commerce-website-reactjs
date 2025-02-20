@@ -1,12 +1,14 @@
-// app/layout.js
+'use client';
+
 import { Inter } from 'next/font/google'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import '../styles/globals.css'
+import SessionProvider from './components/SessionProvider'
 
 const inter = Inter({ subsets: ['latin'] })
 
-export const metadata = {
+const metadata = {
   title: 'GymPanda - Premium Gym Apparel',
   description: 'Elevate your workouts with GymPanda’s high-quality gym wear. Designed for performance, comfort, and style.',
   icons: {
@@ -18,13 +20,15 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className={inter.className}>
-        <div className="flex min-h-screen flex-col">
-          <Navbar />
-          <main className="flex-grow">
-            {children}
-          </main>
-          <Footer />
-        </div>
+        <SessionProvider>
+          <div className="flex min-h-screen flex-col">
+            <Navbar />
+            <main className="flex-grow">
+              {children}
+            </main>
+            <Footer />
+          </div>
+        </SessionProvider>
       </body>
     </html>
   )

@@ -1,9 +1,11 @@
 'use client';
 import { useState } from 'react';
 import Link from 'next/link';
-import { FaShoppingCart, FaUser, FaBars, FaTimes } from 'react-icons/fa';
+import { useSession, signIn, signOut } from 'next-auth/react';
+import { FaShoppingCart, FaUser, FaBars, FaTimes, FaSignInAlt, FaSignOutAlt } from 'react-icons/fa';
 
-function Navbar() {
+export default function Navbar() {
+  const { data: session, status } = useSession();
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
@@ -29,15 +31,35 @@ function Navbar() {
           ))}
         </div>
 
-        {/* Icons & Mobile Menu Toggle */}
+        {/* Icons & Authentication Button */}
         <div className="flex space-x-6 items-center">
-          <Link href="/account">
-            <FaUser className="cursor-pointer hover:text-orange-600 transition" size={22} />
-          </Link>
-
-          <Link href="/cart" className="relative">
+          <Link href="/cart">
             <FaShoppingCart className="cursor-pointer hover:text-orange-600 transition" size={22} />
           </Link>
+
+          {/* Authentication Button */}
+          {status === "loading" ? (
+            <p>Loading...</p>
+          ) : session ? (
+            <div className="hidden md:flex space-x-4 items-center">
+              <Link href="/account">
+                <FaUser className="cursor-pointer hover:text-orange-600 transition" size={22} />
+              </Link>
+              <button 
+                onClick={() => signOut()} 
+                className="flex items-center bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600 transition"
+              >
+                <FaSignOutAlt className="mr-2" /> Logout
+              </button>
+            </div>
+          ) : (
+            <button 
+              onClick={() => signIn()} 
+              className="hidden md:flex items-center bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600 transition"
+            >
+              <FaSignInAlt className="mr-2" /> Login / Register
+            </button>
+          )}
 
           {/* Mobile Menu Button */}
           <button 
@@ -64,6 +86,25 @@ function Navbar() {
               {link.label}
             </Link>
           ))}
+
+          {/* Mobile Authentication Buttons */}
+          <div className="px-6 py-3">
+            {session ? (
+              <button 
+                onClick={() => { signOut(); setMenuOpen(false); }} 
+                className="w-full flex items-center justify-center bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600 transition"
+              >
+                <FaSignOutAlt className="mr-2" /> Logout
+              </button>
+            ) : (
+              <button 
+                onClick={() => { signIn(); setMenuOpen(false); }} 
+                className="w-full flex items-center justify-center bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600 transition"
+              >
+                <FaSignInAlt className="mr-2" /> Login / Register
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </nav>
@@ -76,5 +117,3 @@ const navLinks = [
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },
 ];
-
-export default Navbar;
