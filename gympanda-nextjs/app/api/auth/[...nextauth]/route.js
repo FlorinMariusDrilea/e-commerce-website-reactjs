@@ -1,5 +1,6 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import { authenticateUser } from "../../../../db/db";
 import GoogleProvider from "next-auth/providers/google";
 
 export const authOptions = {
@@ -7,15 +8,20 @@ export const authOptions = {
     CredentialsProvider({
       name: "Credentials",
       credentials: {
-        email: { label: "Email", type: "email", placeholder: "email@example.com" },
+        email: { label: "Email", type: "email", placeholder: "email@gmail.com" },
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
-        // Replace with your real database check
-        if (credentials.email === "test@example.com" && credentials.password === "password123") {
-          return { id: "1", name: "John Doe", email: "test@example.com" };
+        if (!credentials.email || !credentials.password) {
+          throw new Error("Missing email or password");
         }
-        return null; // Authentication failed
+
+        const user = await authenticateUser(credentials.email, credentials.password);
+
+        if (!user) {
+          throw new Error("Invalid email or password");
+        }
+        return user;
       }
     }),
 
