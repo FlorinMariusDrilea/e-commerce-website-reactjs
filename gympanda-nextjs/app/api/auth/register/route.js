@@ -1,20 +1,16 @@
-import { connectDB } from "../../../../db/db";
+import { getUserCollection } from "../../../../db/db";
 import bcrypt from "bcrypt";
 
 export async function POST(req) {
   try {
     const { name, email, password } = await req.json();
-    const { collection } = await connectDB();
-    const userId = `user::${email}`;
 
-    // Check if user already exists
-    try {
-      await collection.get(userId);
-      return new Response("User already exists", { status: 400 });
-    } catch (error) {
-      // User does not exist, continue registration
+    // Get Couchbase collection
+    const collection = await getUserCollection();
+    if (!collection) {
+      throw new Error("Failed to retrieve collection");
     }
-
+    const userId = `user::${email}`;
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -27,7 +23,7 @@ export async function POST(req) {
 
     return new Response("User registered successfully", { status: 201 });
   } catch (error) {
-    console.error("Registration error:", error);
+    console.error("❌ Registration error:", error);
     return new Response("Server error", { status: 500 });
   }
 }
