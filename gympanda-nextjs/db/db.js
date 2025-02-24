@@ -2,15 +2,16 @@ const couchbase = require("couchbase");
 const dotenv = require("dotenv");
 dotenv.config({ path: ".env.local" });
 const bcrypt = require("bcrypt");
+const { v4: uuidv4 } = require('uuid');
 
 async function connectDB() {
   try {
-      const connectionString = `couchbase://${process.env.COUCHBASE_HOST}:11210`;
+      const connectionString = `couchbase://localhost:11210`;
       console.log("🔗 Connecting to:", connectionString);
 
       const cluster = await couchbase.connect(connectionString, {
-          username: process.env.COUCHBASE_USER,
-          password: process.env.COUCHBASE_PASSWORD,
+          username: "Administrator",
+          password: "password",
       });
 
       console.log("✅ Connected to Couchbase");
@@ -27,7 +28,7 @@ async function getProductsCollection() {
     throw new Error("Cluster connection failed. Cannot access bucket or collection.");
   }
   
-  const bucket = cluster.bucket(process.env.COUCHBASE_BUCKET);
+  const bucket = cluster.bucket("ecommerce");
   const scope = bucket.scope('_default');
   const collection = scope.collection('products');
 
@@ -51,14 +52,19 @@ async function getUserCollection() {
   }
 }
 
-async function addProduct(id, name, price, description) {
+async function addProduct(name, price, description, quantity, image) {
     try {
-        const collection = await getProductsCollection();
-        await collection.insert(id, { name, price, description });
-        console.log("✅ Product added successfully!");
-    } catch (error) {
-        console.error("❌ Failed to add product:", error);
-    }
+      const collection = await getProductsCollection();
+      
+      // Generate a unique ID for the new product
+      const id = uuidv4();
+
+      // Insert product with the generated ID
+      await collection.insert(id, { name, price, description, quantity, image });
+      console.log("✅ Product added successfully with ID:", id);
+  } catch (error) {
+      console.error("❌ Failed to add product:", error);
+  }
 }
 
 async function deleteProduct(id) {
@@ -70,6 +76,20 @@ async function deleteProduct(id) {
         console.error("❌ Failed to delete product:", error);
     }
 }
+
+async function updateProduct(id, name, price, description, quantity, image) {
+  try {
+      const collection = await getProductsCollection();
+
+      const updatedProduct = { name, price, description, quantity, image };
+
+      await collection.upsert(id, updatedProduct);
+      console.log("✅ Product updated successfully with ID:", id);
+  } catch (error) {
+      console.error("❌ Failed to update product:", error);
+  }
+}
+
 
 async function registerUser(email, name, password) {
     try {
@@ -109,4 +129,12 @@ async function authenticateUser(email, password) {
   }
 }
 
-module.exports = { connectDB, getProductsCollection, getUserCollection, addProduct, deleteProduct, registerUser, authenticateUser };
+// addProduct("Leggings", 25, "Description for leggings", 10, "images/leggings.webp");
+// addProduct("Bra", 10, "Description for bra", 0, "images/bra.webp");
+// addProduct("Socks", 5, "Description for socks", 2, "images/socks.webp");
+
+// deleteProduct("4d1a5399-d997-4c7a-a47b-31e6a4fd7cbc");
+// deleteProduct("e0e25d17-6cf4-45c1-aaab-af1904696f1e");
+// deleteProduct("e5b64cca-55c3-49d5-8ce8-7bedb5f2cb7d");
+
+module.exports = { connectDB, getProductsCollection, getUserCollection, addProduct, updateProduct, deleteProduct, registerUser, authenticateUser };

@@ -61,7 +61,7 @@ const About = () => {
           Ready to take your fitness journey to the next level? Join thousands of like-minded athletes and discover the power of GymPanda gear that moves with you.
         </p>
         <Link 
-          href="/signup" 
+          href="/auth/register" 
           className="bg-orange-600 text-white px-10 py-4 rounded-lg font-semibold hover:bg-orange-700 transition-colors inline-block"
         >
           Get Started Today

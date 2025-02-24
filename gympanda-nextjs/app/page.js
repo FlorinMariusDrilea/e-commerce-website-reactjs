@@ -6,23 +6,17 @@ export default function Home() {
       {/* Hero Section */}
       <div className="text-center mb-16">
         <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-6">
-          Elevate Your Workout with <span className="text-orange-600">GymPanda</span>
+          Elevate Your Workout with <span className="text-orange-500">GymPanda</span>
         </h1>
         <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-8">
           Shop our premium gym wear designed for performance, comfort, and style. Stay fit while looking great.
         </p>
         <div className="flex justify-center gap-4">
           <Link 
-            href="/shop" 
-            className="bg-orange-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-orange-700 transition-colors"
+            href="/product" 
+            className="bg-orange-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-orange-700 transition-colors"
           >
             Shop Now
-          </Link>
-          <Link 
-            href="/collections" 
-            className="bg-gray-100 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-200 transition-colors"
-          >
-            View Collections
           </Link>
         </div>
       </div>
@@ -41,18 +35,6 @@ export default function Home() {
             <p className="text-gray-500">{feature.description}</p>
           </div>
         ))}
-      </div>
-
-      {/* CTA Section */}
-      <div className="text-center bg-gray-50 rounded-2xl p-8 mb-16">
-        <h2 className="text-gray-600 text-3xl font-bold mb-4">Gear Up for Your Best Workout</h2>
-        <p className="text-gray-500 mb-6">Shop high-quality gym wear trusted by fitness enthusiasts worldwide.</p>
-        <Link 
-          href="/shop" 
-          className="bg-orange-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-orange-700 transition-colors inline-block"
-        >
-          Browse Collection
-        </Link>
       </div>
     </div>
   );
