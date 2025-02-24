@@ -16,6 +16,26 @@ bucketCreate(){
     fi
 }
 
+createCollections(){
+    echo "Creating collections for products and users..."
+
+    # Create collections using Couchbase CLI
+    couchbase-cli collection-manage -c localhost -u $COUCHBASE_ADMINISTRATOR_USERNAME -p $COUCHBASE_ADMINISTRATOR_PASSWORD \
+        --bucket=$COUCHBASE_BUCKET_NAME \
+        --create-collection=_default.products
+
+    couchbase-cli collection-manage -c localhost -u $COUCHBASE_ADMINISTRATOR_USERNAME -p $COUCHBASE_ADMINISTRATOR_PASSWORD \
+        --bucket=$COUCHBASE_BUCKET_NAME \
+        --create-collection=_default.users
+
+    if [[ $? == 0 ]]; then
+        echo "Collections created successfully!"
+    else
+        echo "Failed to create collections."
+        exit 1
+    fi
+}
+
 clusterInit(){
     couchbase-cli cluster-init -c couchbase --cluster-username $COUCHBASE_ADMINISTRATOR_USERNAME \
         --cluster-password $COUCHBASE_ADMINISTRATOR_PASSWORD --services data,index,query,fts \
@@ -50,6 +70,7 @@ main(){
     if [[ $HEALTHCHECK == *"unknown"* ]]; then
         clusterInit
         bucketCreate
+        createCollections
     else
         echo "Cluster already initialized"
     fi

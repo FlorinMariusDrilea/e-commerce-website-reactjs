@@ -1,4 +1,4 @@
-# GymPanda - Premium Gym Shop Project
+# GymPanda - Premium Gym Shop Project ( https://gympanda.vercel.app/ )
 
 ## Overview
 GymPanda is an e-commerce platform offering high-quality gym wear designed for performance, comfort, and style. This project is built using **Next.js**, **React**, and **Tailwind CSS**, ensuring a modern and scalable web application.
@@ -41,7 +41,7 @@ Ensure you have **Docker** installed as well, for couchbase.
    yarn install
    ```
 
-### Running the Project
+### Running the Project (locally)
 Start the couchbase instance:
 ```bash
 make start_couchbase
@@ -60,20 +60,40 @@ The couchbase instance should be available at **http://localhost:8091**.
 ```
 📦 gympanda-nextjs
 ├── 📂 app                  # Next.js application files
-├────── 📂 api              # API routes
-├────── 📂 auth             # Authentication route
-├────── 📂 components       # Reusable UI components
-├────── 📂 contact          # Contact page
-├────── 📂 libs/utils       # Utility functions
-├────── 📂 products         # Products page
-├────── 📂 shipping-returns # Shipping page
+│   ├── 📂 about            # About page
+│   ├── 📂 api              # API routes
+│   ├── 📂 auth             # Authentication routes
+│   │   ├── 📂 register     # Registration page
+│   │   └── 📂 signin       # Sign-in page
+│   ├── 📂 contact          # Contact page
+│   ├── 📂 components       # Reusable UI components
+│   ├── 📂 dashboard        # Dashboard page
+│   ├── 📂 product          # Product page
+│   │   ├── 📂 [id]         # Dynamic product page by id
+│   │   ├── 📄 page.js      # Product page component
+│   ├── 📂 shipping-returns # Shipping and returns page
+│   ├── 📂 policies         # Policy pages
+│   │   ├── 📄 cookie-policy.js       # Cookie policy
+│   │   ├── 📄 privacy-policy.js      # Privacy policy
+│   │   └── 📄 terms-and-conditions.js # Terms and conditions
+│   └── 📄 layout.js        # Main layout
 ├── 📂 db                   # Database configuration
+│   └── 📄 db.js            # Database setup
 ├── 📂 public               # Static assets (images, favicon, etc.)
 ├── 📂 styles               # Global styles and Tailwind setup
-├── jsconfig.json           # JavaScript configuration
-├── next.config.js          # Next.js configuration
-├── package.json            # Project dependencies and scripts
-└── README.md               # Project documentation
+│   └── 📄 globals.css      # Global CSS file
+├── 📄 .env.local           # Local environment variables
+├── 📄 .env.prod            # Production environment variables
+├── 📄 .gitignore           # Git ignore file
+├── 📄 jsconfig.json        # JavaScript configuration
+├── 📄 jsonflg.json         # JSON configuration file
+├── 📄 Makefile             # Makefile for project tasks
+├── 📄 next.config.mjs      # Next.js configuration
+├── 📄 package-lock.json    # Lock file for dependencies
+├── 📄 package.json         # Project dependencies and scripts
+├── 📄 postcss.config.mjs   # PostCSS configuration
+├── 📄 README.md            # Project documentation
+└── 📄 tailwind.config.mjs  # Tailwind CSS configuration
 ```
 
 ## Deployment

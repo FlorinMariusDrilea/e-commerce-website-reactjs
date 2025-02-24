@@ -1,8 +1,9 @@
 import { notFound } from "next/navigation";
 
+// Fetch product data from the API using dynamic environment variables
 const fetchProduct = async (id) => {
   try {
-    const res = await fetch(`http://localhost:3000/api/product/${id}`, { cache: "no-store" });
+    const res = await fetch(`${process.env.NEXTAUTH_URL}/api/product/${id}`, { cache: "no-store" });
     if (!res.ok) return null;
     return res.json();
   } catch (error) {
@@ -26,7 +27,7 @@ export default async function ProductPage({ params }) {
         {/* Product Image */}
         <div className="relative">
           <img
-            src={"/" + product.data.image || "/default-image.jpg"}
+            src={"/" + product.data.image}
             alt={product.data.name}
             className="w-full h-[500px] object-cover rounded-lg shadow-lg"
           />

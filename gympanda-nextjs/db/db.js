@@ -1,48 +1,58 @@
 const couchbase = require("couchbase");
-const dotenv = require("dotenv");
-dotenv.config({ path: ".env.local" });
 const bcrypt = require("bcrypt");
 const { v4: uuidv4 } = require('uuid');
 
+
+// Connect to Couchbase using environment variables
 async function connectDB() {
   try {
-      const connectionString = `couchbase://localhost:11210`;
-      console.log("🔗 Connecting to:", connectionString);
+    // Using environment variables to configure the connection
+    const connectionString = process.env.COUCHBASE_HOST;
+    const username = process.env.COUCHBASE_USER;
+    const password = process.env.COUCHBASE_PASSWORD; 
 
-      const cluster = await couchbase.connect(connectionString, {
-          username: "Administrator",
-          password: "password",
-      });
+    console.log("🔗 Connecting to Couchbase using:", connectionString);
 
-      console.log("✅ Connected to Couchbase");
-      return cluster;
+    const cluster = await couchbase.connect(connectionString, {
+      username: username,
+      password: password,
+      configProfile: "wanDevelopment",
+      timeoutOptions: {
+        connectTimeout: 10000,
+      }
+    });
+
+    console.log("✅ Connected to Couchbase");
+    return cluster;
   } catch (error) {
-      console.error("❌ Couchbase Connection Failed:", error);
-      throw error;
+    console.error("❌ Couchbase Connection Failed:", error);
+    throw error;
   }
 }
 
+// Get Products Collection from Couchbase using environment variables
 async function getProductsCollection() {
   const cluster = await connectDB();
   if (!cluster) {
     throw new Error("Cluster connection failed. Cannot access bucket or collection.");
   }
-  
-  const bucket = cluster.bucket("ecommerce");
-  const scope = bucket.scope('_default');
-  const collection = scope.collection('products');
+
+  const bucket = cluster.bucket(process.env.COUCHBASE_BUCKET); 
+  const scope = bucket.scope(process.env.COUCHBASE_SCOPE); 
+  const collection = scope.collection(process.env.COUCHBASE_COLLECTION_PRODUCTS);
 
   return collection;
 }
 
+// Get User Collection from Couchbase using environment variables
 async function getUserCollection() {
   try {
     const cluster = await connectDB();
     if (!cluster) throw new Error("Cluster connection failed. Cannot access bucket or collection.");
 
     const bucket = cluster.bucket(process.env.COUCHBASE_BUCKET);
-    const scope = bucket.scope('_default');
-    const collection = scope.collection('users');
+    const scope = bucket.scope(process.env.COUCHBASE_SCOPE);
+    const collection = scope.collection(process.env.COUCHBASE_COLLECTION_USERS);
 
     console.log("✅ Collection retrieved successfully!");
     return collection;
@@ -52,60 +62,64 @@ async function getUserCollection() {
   }
 }
 
+// Add Product to the database
 async function addProduct(name, price, description, quantity, image) {
-    try {
-      const collection = await getProductsCollection();
-      
-      // Generate a unique ID for the new product
-      const id = uuidv4();
+  try {
+    const collection = await getProductsCollection();
 
-      // Insert product with the generated ID
-      await collection.insert(id, { name, price, description, quantity, image });
-      console.log("✅ Product added successfully with ID:", id);
+    // Generate a unique ID for the new product
+    const id = uuidv4();
+
+    // Insert product with the generated ID
+    await collection.insert(id, { name, price, description, quantity, image });
+    console.log("✅ Product added successfully with ID:", id);
   } catch (error) {
-      console.error("❌ Failed to add product:", error);
+    console.error("❌ Failed to add product:", error);
   }
 }
 
+// Delete Product from the database
 async function deleteProduct(id) {
-    try {
-        const collection = await getProductsCollection();
-        await collection.remove(id);
-        console.log("🗑️ Product deleted!");
-    } catch (error) {
-        console.error("❌ Failed to delete product:", error);
-    }
+  try {
+    const collection = await getProductsCollection();
+    await collection.remove(id);
+    console.log("🗑️ Product deleted!");
+  } catch (error) {
+    console.error("❌ Failed to delete product:", error);
+  }
 }
 
+// Update Product in the database
 async function updateProduct(id, name, price, description, quantity, image) {
   try {
-      const collection = await getProductsCollection();
+    const collection = await getProductsCollection();
 
-      const updatedProduct = { name, price, description, quantity, image };
+    const updatedProduct = { name, price, description, quantity, image };
 
-      await collection.upsert(id, updatedProduct);
-      console.log("✅ Product updated successfully with ID:", id);
+    await collection.upsert(id, updatedProduct);
+    console.log("✅ Product updated successfully with ID:", id);
   } catch (error) {
-      console.error("❌ Failed to update product:", error);
+    console.error("❌ Failed to update product:", error);
   }
 }
 
-
+// Register User function
 async function registerUser(email, name, password) {
-    try {
-        const collection = await getProductsCollection();
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const userId = `user::${email}`;
-        await collection.insert(userId, { email, name, password: hashedPassword });
-        console.log("✅ User registered successfully!");
-    } catch (error) {
-        console.error("❌ Failed to register user:", error);
-    }
+  try {
+    const collection = await getUserCollection();
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const userId = `user::${email}`;
+    await collection.insert(userId, { email, name, password: hashedPassword });
+    console.log("✅ User registered successfully!");
+  } catch (error) {
+    console.error("❌ Failed to register user:", error);
+  }
 }
 
+// Authenticate User function
 async function authenticateUser(email, password) {
   try {
-    const cluster = await connectDB();  // Connect to the cluster
+    const cluster = await connectDB(); // Connect to the cluster
     const query = 'SELECT meta().id AS id, email, name, `password` FROM `ecommerce`.`_default`.`users` WHERE email = $1 LIMIT 1;';
 
     // Execute the N1QL query on the cluster
@@ -129,12 +143,13 @@ async function authenticateUser(email, password) {
   }
 }
 
-// addProduct("Leggings", 25, "Description for leggings", 10, "images/leggings.webp");
-// addProduct("Bra", 10, "Description for bra", 0, "images/bra.webp");
-// addProduct("Socks", 5, "Description for socks", 2, "images/socks.webp");
-
-// deleteProduct("4d1a5399-d997-4c7a-a47b-31e6a4fd7cbc");
-// deleteProduct("e0e25d17-6cf4-45c1-aaab-af1904696f1e");
-// deleteProduct("e5b64cca-55c3-49d5-8ce8-7bedb5f2cb7d");
-
-module.exports = { connectDB, getProductsCollection, getUserCollection, addProduct, updateProduct, deleteProduct, registerUser, authenticateUser };
+module.exports = {
+  connectDB,
+  getProductsCollection,
+  getUserCollection,
+  addProduct,
+  updateProduct,
+  deleteProduct,
+  registerUser,
+  authenticateUser,
+};
