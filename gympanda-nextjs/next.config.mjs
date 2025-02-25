@@ -2,7 +2,7 @@
 const nextConfig = {
   webpack: (config, { isServer }) => {
     if (isServer) {
-      config.externals = [...config.externals, "couchbase"];
+      config.externals = [...config.externals, 'couchbase']; // Add couchbase to externals on server-side
     }
     return config;
   },
@@ -13,4 +13,5 @@ const nextConfig = {
     COUCHBASE_PASSWORD: process.env.COUCHBASE_PASSWORD,
   },
 };
+
 export default nextConfig;

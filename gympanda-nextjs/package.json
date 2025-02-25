@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "vercel-build": "npm install --build-from-source && npm rebuild couchbase"
   },
   "dependencies": {
     "@types/react": "^18.0.0",
