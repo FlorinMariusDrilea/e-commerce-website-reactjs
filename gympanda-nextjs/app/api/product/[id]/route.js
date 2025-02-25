@@ -8,30 +8,51 @@ const handleResponse = (status, message, data = null) => {
   });
 };
 
-// GET: Fetch a single product by ID using N1QL
-export async function GET(request, { params }) {
+// Helper function to fetch product from products.json located in the public folder
+const fetchProductFromJson = async (id) => {
   try {
-    const { id } = params;
-    console.log("Fetching product with ID:", id);
+    // Fetch the products.json from the public directory
+    const res = await fetch('/products.json');
 
-    const { cluster } = await getProductsCollection();
-
-    // Use a parameterized N1QL query
-    const query = `
-      SELECT meta(p).id AS id, p.* 
-      FROM \`ecommerce\`.\`_default\`.\`products\` p
-      WHERE meta(p).id = $1
-    `;
-
-    const result = await cluster.query(query, { parameters: [id] });
-
-    if (result.rows.length === 0) {
-      return handleResponse(404, "Product not found");
+    if (!res.ok) {
+      throw new Error("Failed to load local products.json");
     }
 
-    return handleResponse(200, "Product fetched successfully", result.rows[0]);
+    const data = await res.json(); // Parse the JSON response
+
+    // Find the product by its ID
+    const product = data.find((product) => product.id === id);
+
+    return product ? { data: product } : null;
   } catch (error) {
-    console.error("Error fetching aproduct:", error);
+    console.error("Error fetching product from local JSON:", error);
+    return null;
+  }
+};
+
+
+export async function GET(request, { params }) {
+  try {
+    // Ensure `params` is available and await it to get the `id`
+    const { id } = await params;
+
+    console.log("Fetching product with ID:", id);
+
+    // First, try to fetch the product from Couchbase (or your primary database)
+
+    // If the product is not found or there's an error, fallback to local JSON
+    console.log("Fallback to local JSON for product data...");
+    const product = await fetchProductFromJson(id);
+
+    if (product) {
+      return handleResponse(200, "Product fetched from local JSON", product.data);
+    }
+
+    // If no product is found, return an error
+    return handleResponse(500, "Product not found", { error: "Product not found" });
+
+  } catch (error) {
+    console.error("Error fetching product:", error);
     return handleResponse(500, "Error fetching product", { error: error.message });
   }
 }

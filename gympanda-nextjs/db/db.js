@@ -2,28 +2,33 @@ const couchbase = require("couchbase");
 const bcrypt = require("bcrypt");
 const { v4: uuidv4 } = require('uuid');
 
+// Store the Couchbase cluster and collections as cached variables
+let cachedCluster = null;
+let cachedProductsCollection = null;
+let cachedUserCollection = null;
 
 // Connect to Couchbase using environment variables
 async function connectDB() {
+  if (cachedCluster) {
+    console.log("🔗 Using cached Couchbase connection");
+    return cachedCluster;
+  }
+
   try {
-    // Using environment variables to configure the connection
     const connectionString = process.env.COUCHBASE_HOST;
     const username = process.env.COUCHBASE_USER;
-    const password = process.env.COUCHBASE_PASSWORD; 
+    const password = process.env.COUCHBASE_PASSWORD;
 
     console.log("🔗 Connecting to Couchbase using:", connectionString);
 
-    const cluster = await couchbase.connect(connectionString, {
+    cachedCluster = await couchbase.connect(connectionString, {
       username: username,
       password: password,
       configProfile: "wanDevelopment",
-      timeoutOptions: {
-        connectTimeout: 10000,
-      }
     });
 
     console.log("✅ Connected to Couchbase");
-    return cluster;
+    return cachedCluster;
   } catch (error) {
     console.error("❌ Couchbase Connection Failed:", error);
     throw error;
@@ -32,34 +37,32 @@ async function connectDB() {
 
 // Get Products Collection from Couchbase using environment variables
 async function getProductsCollection() {
-  const cluster = await connectDB();
-  if (!cluster) {
-    throw new Error("Cluster connection failed. Cannot access bucket or collection.");
+  if (cachedProductsCollection) {
+    console.log("🔗 Using cached Products collection");
+    return cachedProductsCollection;
   }
 
-  const bucket = cluster.bucket(process.env.COUCHBASE_BUCKET); 
-  const scope = bucket.scope(process.env.COUCHBASE_SCOPE); 
-  const collection = scope.collection(process.env.COUCHBASE_COLLECTION_PRODUCTS);
+  const cluster = await connectDB();
+  const bucket = cluster.bucket(process.env.COUCHBASE_BUCKET);
+  const scope = bucket.scope(process.env.COUCHBASE_SCOPE);
+  cachedProductsCollection = scope.collection(process.env.COUCHBASE_COLLECTION_PRODUCTS);
 
-  return collection;
+  return cachedProductsCollection;
 }
 
 // Get User Collection from Couchbase using environment variables
 async function getUserCollection() {
-  try {
-    const cluster = await connectDB();
-    if (!cluster) throw new Error("Cluster connection failed. Cannot access bucket or collection.");
-
-    const bucket = cluster.bucket(process.env.COUCHBASE_BUCKET);
-    const scope = bucket.scope(process.env.COUCHBASE_SCOPE);
-    const collection = scope.collection(process.env.COUCHBASE_COLLECTION_USERS);
-
-    console.log("✅ Collection retrieved successfully!");
-    return collection;
-  } catch (error) {
-    console.error("❌ Failed to retrieve collection:", error);
-    throw error;
+  if (cachedUserCollection) {
+    console.log("🔗 Using cached User collection");
+    return cachedUserCollection;
   }
+
+  const cluster = await connectDB();
+  const bucket = cluster.bucket(process.env.COUCHBASE_BUCKET);
+  const scope = bucket.scope(process.env.COUCHBASE_SCOPE);
+  cachedUserCollection = scope.collection(process.env.COUCHBASE_COLLECTION_USERS);
+
+  return cachedUserCollection;
 }
 
 // Add Product to the database
@@ -158,8 +161,6 @@ async function testConnection() {
     console.error("❌ Connection test failed:", error);
   }
 }
-
-testConnection();
 
 module.exports = {
   connectDB,

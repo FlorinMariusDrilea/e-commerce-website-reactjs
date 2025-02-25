@@ -1,4 +1,6 @@
 import { notFound } from "next/navigation";
+import fs from "fs";
+import path from "path";
 
 // Fetch product data from the API using dynamic environment variables
 const fetchProduct = async (id) => {
@@ -7,17 +9,55 @@ const fetchProduct = async (id) => {
     if (!res.ok) return null;
     return res.json();
   } catch (error) {
-    console.error("Error fetching product:", error);
+    console.error("Error fetching product from API:", error);
     return null;
   }
 };
 
+// Fallback to product.json if the API fetch fails
+const fetchProductFromJson = async (id) => {
+  try {
+    // Fetch the products.json from the public directory (client-side)
+    const res = await fetch('/products.json'); 
+    console.log("res", res);
+    if (!res.ok) throw new Error("Failed to load local products.json");
+
+    const data = await res.json(); // Parse the JSON response
+
+    // Check if 'data' is an array
+    if (!Array.isArray(data)) {
+      console.error("Expected an array, but got:", data);
+      return null; // Return null if data is not an array
+    }
+
+    // Find the item in the local JSON data by matching the ID
+    const item = data.find((item) => item.id === id); 
+    return item ? { data: item } : null; // Return item instead of product
+  } catch (error) {
+    console.error("Error fetching item from local JSON:", error);
+    return null;
+  }
+};
+
+
 export default async function ProductPage({ params }) {
-  const id = params?.id;
+  // Ensure `params` are available and await the correct usage
+  const { id } = await params;
+  
   if (!id) return notFound();
 
-  const product = await fetchProduct(id);
+  // Try to fetch product data from API
+  let product = await fetchProduct(id);
+
+  // If product is not found or API call failed, fallback to the local JSON
+  if (!product) {
+    console.log("Falling back to local JSON for product data...");
+    product = await fetchProductFromJson(id);
+  }
+
+  // If still no product found, return not found
   if (!product || !product.data) return notFound();
+  
   console.log("Product:", product);
 
   return (

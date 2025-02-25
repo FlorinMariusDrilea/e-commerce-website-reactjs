@@ -1,0 +1,67 @@
+[
+    {
+      "id": 1,
+      "name": "Socks",
+      "description": "Description for socks",
+      "price": 5.99,
+      "quantity": 25,
+      "image": "/images/socks.webp"
+    },
+    {
+      "id": 2,
+      "name": "Leggings",
+      "description": "Description leggings",
+      "price": 30,
+      "quantity": 12,
+      "image": "/images/leggings.webp"
+    },
+    {
+      "id": 3,
+      "name": "Bra",
+      "description": "Description bra",
+      "price": 10.99,
+      "quantity": 2,
+      "image": "/images/bra.webp"
+    },
+    {
+      "id": 4,
+      "name": "Leggings",
+      "description": "Description leggings",
+      "price": 30,
+      "quantity": 12,
+      "image": "/images/leggings.webp"
+    },
+    {
+      "id": 5,
+      "name": "Bra",
+      "description": "Description bra",
+      "price": 10.99,
+      "quantity": 0,
+      "image": "/images/bra.webp"
+    },
+    {
+      "id": 6,
+      "name": "Bra",
+      "description": "Description bra",
+      "price": 10.99,
+      "quantity": 0,
+      "image": "/images/bra.webp"
+    },
+    {
+      "id": 7,
+      "name": "Bra",
+      "description": "Description bra",
+      "price": 10.99,
+      "quantity": 2,
+      "image": "/images/bra.webp"
+    },
+    {
+      "id": 8,
+      "name": "Bra",
+      "description": "Description bra",
+      "price": 10.99,
+      "quantity": 12,
+      "image": "/images/bra.webp"
+    }
+]
+  

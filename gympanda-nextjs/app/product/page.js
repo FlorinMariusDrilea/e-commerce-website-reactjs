@@ -8,12 +8,22 @@ const ShopPage = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetch('/api/product')
-      .then((res) => {
-        if (!res.ok) throw new Error('Failed to fetch products');
-        return res.json();
-      })
-      .then((data) => {
+    // Attempt to fetch products from the database
+    const fetchProducts = async () => {
+      const apiUrl = '/api/product';
+      const jsonUrl = '/products.json';
+
+      // Timeout utility to handle slow API calls
+      const timeout = (ms) => new Promise((resolve, reject) => setTimeout(reject, ms, 'timeout'));
+
+      const fetchApiData = fetch(apiUrl).then(res => res.ok ? res.json() : Promise.reject('Failed to fetch API'));
+      const fetchJsonData = fetch(jsonUrl).then(res => res.json());
+
+      try {
+        // Fetch both concurrently and set products from whichever comes first
+        let data = await Promise.race([fetchApiData, timeout(2000).then(() => fetchJsonData)]);
+
+        // Check if data is valid
         if (Array.isArray(data)) {
           setProducts(data);
         } else if (data?.data && Array.isArray(data.data)) {
@@ -21,8 +31,22 @@ const ShopPage = () => {
         } else {
           throw new Error('Invalid data format');
         }
-      })
-      .catch((err) => setError(err.message));
+      } catch (err) {
+        // Fallback to loading the local JSON if API fetch fails or takes too long
+        if (err === 'timeout') {
+          try {
+            let data = await fetchJsonData; // Fallback to product.json
+            setProducts(data);
+          } catch (jsonError) {
+            setError('Failed to load products from both API and local JSON');
+          }
+        } else {
+          setError('Failed to load products from API');
+        }
+      }
+    };
+
+    fetchProducts();
   }, []);
 
   return (
