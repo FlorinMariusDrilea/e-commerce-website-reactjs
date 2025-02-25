@@ -1,37 +1,36 @@
 import { createClient } from 'redis';
+import { NextResponse } from 'next/server';
+import fs from 'fs/promises';
+import path from 'path';
 
-// Initialize Redis client
+// Initialize Redis client safely
 const redisClient = createClient({
-  url: process.env.REDIS_URL, // Ensure you set REDIS_URL in your environment variables
+  url: process.env.REDIS_URL,
 });
 
 redisClient.on('error', (err) => console.error('Redis Client Error', err));
 
-await redisClient.connect();
+async function connectRedis() {
+  if (!redisClient.isOpen) {
+    await redisClient.connect();
+  }
+}
 
-// Helper function to handle responses
+// Helper function to handle API responses
 const handleResponse = (status, message, data = null) => {
-  return new Response(JSON.stringify({ message, data }), {
-    status,
-    headers: { "Content-Type": "application/json" },
-  });
+  return NextResponse.json({ message, data }, { status });
 };
 
-// Helper function to fetch product from products.json located in the public folder
+// Fetch product from local JSON (server-side)
 const fetchProductFromJson = async (id) => {
   try {
-    const res = await fetch('/products.json');
+    const filePath = path.join(process.cwd(), 'public', 'products.json');
+    const fileData = await fs.readFile(filePath, 'utf-8');
+    const products = JSON.parse(fileData);
 
-    if (!res.ok) {
-      throw new Error("Failed to load local products.json");
-    }
-
-    const data = await res.json();
-    const product = data.find((product) => product.id === id);
-
-    return product ? { data: product } : null;
+    return products.find((product) => product.id === id) || null;
   } catch (error) {
-    console.error("Error fetching product from local JSON:", error);
+    console.error("Error reading products.json:", error);
     return null;
   }
 };
@@ -39,8 +38,8 @@ const fetchProductFromJson = async (id) => {
 // Fetch product from Redis
 const fetchProductFromRedis = async (id) => {
   try {
+    await connectRedis();
     const product = await redisClient.get(`product:${id}`);
-
     return product ? JSON.parse(product) : null;
   } catch (error) {
     console.error("Error fetching product from Redis:", error);
@@ -48,44 +47,42 @@ const fetchProductFromRedis = async (id) => {
   }
 };
 
-// Store product in Redis
+// Store product in Redis (1-hour expiration)
 const storeProductInRedis = async (id, product) => {
   try {
-    await redisClient.set(`product:${id}`, JSON.stringify(product), {
-      EX: 3600, // Cache expiry time in seconds (1 hour)
-    });
+    await connectRedis();
+    await redisClient.set(`product:${id}`, JSON.stringify(product), { EX: 3600 });
   } catch (error) {
     console.error("Error storing product in Redis:", error);
   }
 };
 
-export async function GET(request, { params }) {
+// API Route: GET /api/product/[id]
+export async function GET(_, { params }) {
   try {
-    const { id } = await params;
+    const { id } = params;
+    if (!id) return handleResponse(400, "Missing product ID");
 
     console.log("Fetching product with ID:", id);
 
-    // First, try to fetch the product from Redis
+    // 1️⃣ Check Redis cache first
     let product = await fetchProductFromRedis(id);
 
+    // 2️⃣ If not in Redis, check local JSON
     if (!product) {
-      console.log("Product not found in Redis, falling back to local JSON...");
+      console.log("Product not found in Redis, checking local JSON...");
       product = await fetchProductFromJson(id);
 
       if (product) {
-        // Store product in Redis for future requests
-        await storeProductInRedis(id, product.data);
+        await storeProductInRedis(id, product); // Cache in Redis for future use
       }
     }
 
-    if (product) {
-      return handleResponse(200, "Product fetched successfully", product.data);
-    }
-
-    return handleResponse(404, "Product not found", { error: "Product not found" });
+    return product ? handleResponse(200, "Product found", product) 
+                   : handleResponse(404, "Product not found");
 
   } catch (error) {
     console.error("Error fetching product:", error);
-    return handleResponse(500, "Error fetching product", { error: error.message });
+    return handleResponse(500, "Internal Server Error", { error: error.message });
   }
 }
