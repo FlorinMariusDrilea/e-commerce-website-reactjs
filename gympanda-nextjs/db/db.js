@@ -143,6 +143,24 @@ async function authenticateUser(email, password) {
   }
 }
 
+async function testConnection() {
+  try {
+    console.log("🔍 Testing connection to Couchbase...");
+
+    const cluster = await connectDB();
+
+    if (cluster) {
+      console.log("✅ Successfully connected to Couchbase!");
+    } else {
+      console.error("❌ Failed to connect to Couchbase. No cluster object returned.");
+    }
+  } catch (error) {
+    console.error("❌ Connection test failed:", error);
+  }
+}
+
+testConnection();
+
 module.exports = {
   connectDB,
   getProductsCollection,
