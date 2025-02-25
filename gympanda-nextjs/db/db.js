@@ -1,174 +1,110 @@
-const couchbase = require("couchbase");
-const bcrypt = require("bcrypt");
-const { v4: uuidv4 } = require('uuid');
+import { createClient } from "redis";
+import bcrypt from "bcrypt";
+import { v4 as uuidv4 } from "uuid";
 
-// Store the Couchbase cluster and collections as cached variables
-let cachedCluster = null;
-let cachedProductsCollection = null;
-let cachedUserCollection = null;
+let redisClient = null;
 
-// Connect to Couchbase using environment variables
 async function connectDB() {
-  if (cachedCluster) {
-    console.log("🔗 Using cached Couchbase connection");
-    return cachedCluster;
+  if (!redisClient) {
+    redisClient = createClient({ url: process.env.REDIS_URL });
+    redisClient.on("error", (err) => console.error("❌ Redis Connection Failed:", err));
+    await redisClient.connect();
+    console.log("✅ Connected to Redis");
+  } else {
+    console.log("🔗 Using cached Redis connection");
   }
-
-  try {
-    const connectionString = process.env.COUCHBASE_HOST;
-    const username = process.env.COUCHBASE_USER;
-    const password = process.env.COUCHBASE_PASSWORD;
-
-    console.log("🔗 Connecting to Couchbase using:", connectionString);
-
-    cachedCluster = await couchbase.connect(connectionString, {
-      username: username,
-      password: password,
-      configProfile: "wanDevelopment",
-    });
-
-    console.log("✅ Connected to Couchbase");
-    return cachedCluster;
-  } catch (error) {
-    console.error("❌ Couchbase Connection Failed:", error);
-    throw error;
-  }
+  return redisClient;
 }
 
-// Get Products Collection from Couchbase using environment variables
-async function getProductsCollection() {
-  if (cachedProductsCollection) {
-    console.log("🔗 Using cached Products collection");
-    return cachedProductsCollection;
-  }
-
-  const cluster = await connectDB();
-  const bucket = cluster.bucket(process.env.COUCHBASE_BUCKET);
-  const scope = bucket.scope(process.env.COUCHBASE_SCOPE);
-  cachedProductsCollection = scope.collection(process.env.COUCHBASE_COLLECTION_PRODUCTS);
-
-  return cachedProductsCollection;
-}
-
-// Get User Collection from Couchbase using environment variables
-async function getUserCollection() {
-  if (cachedUserCollection) {
-    console.log("🔗 Using cached User collection");
-    return cachedUserCollection;
-  }
-
-  const cluster = await connectDB();
-  const bucket = cluster.bucket(process.env.COUCHBASE_BUCKET);
-  const scope = bucket.scope(process.env.COUCHBASE_SCOPE);
-  cachedUserCollection = scope.collection(process.env.COUCHBASE_COLLECTION_USERS);
-
-  return cachedUserCollection;
-}
-
-// Add Product to the database
+// Add Product to Redis
 async function addProduct(name, price, description, quantity, image) {
   try {
-    const collection = await getProductsCollection();
-
-    // Generate a unique ID for the new product
+    const client = await connectDB();
     const id = uuidv4();
-
-    // Insert product with the generated ID
-    await collection.insert(id, { name, price, description, quantity, image });
+    const product = { name, price, description, quantity, image };
+    await client.hSet(`product:${id}`, product);
     console.log("✅ Product added successfully with ID:", id);
   } catch (error) {
     console.error("❌ Failed to add product:", error);
   }
 }
 
-// Delete Product from the database
+// Delete Product from Redis
 async function deleteProduct(id) {
   try {
-    const collection = await getProductsCollection();
-    await collection.remove(id);
+    const client = await connectDB();
+    await client.del(`product:${id}`);
     console.log("🗑️ Product deleted!");
   } catch (error) {
     console.error("❌ Failed to delete product:", error);
   }
 }
 
-// Update Product in the database
+// Update Product in Redis
 async function updateProduct(id, name, price, description, quantity, image) {
   try {
-    const collection = await getProductsCollection();
-
+    const client = await connectDB();
     const updatedProduct = { name, price, description, quantity, image };
-
-    await collection.upsert(id, updatedProduct);
+    await client.hSet(`product:${id}`, updatedProduct);
     console.log("✅ Product updated successfully with ID:", id);
   } catch (error) {
     console.error("❌ Failed to update product:", error);
   }
 }
 
-// Register User function
+// Register User in Redis
 async function registerUser(email, name, password) {
   try {
-    const collection = await getUserCollection();
+    const client = await connectDB();
     const hashedPassword = await bcrypt.hash(password, 10);
-    const userId = `user::${email}`;
-    await collection.insert(userId, { email, name, password: hashedPassword });
+    const userId = `user:${email}`;
+    await client.hSet(userId, { email, name, password: hashedPassword });
     console.log("✅ User registered successfully!");
   } catch (error) {
     console.error("❌ Failed to register user:", error);
   }
 }
 
-// Authenticate User function
+// Authenticate User from Redis
 async function authenticateUser(email, password) {
   try {
-    const cluster = await connectDB(); // Connect to the cluster
-    const query = 'SELECT meta().id AS id, email, name, `password` FROM `ecommerce`.`_default`.`users` WHERE email = $1 LIMIT 1;';
+    const client = await connectDB();
+    const user = await client.hGetAll(`user:${email}`);
 
-    // Execute the N1QL query on the cluster
-    const result = await cluster.query(query, { parameters: [email] });
-
-    if (result.rows.length === 0) {
+    if (!user || Object.keys(user).length === 0) {
       throw new Error("User not found");
     }
 
-    const user = result.rows[0];
     const isValidPassword = await bcrypt.compare(password, user.password);
     if (!isValidPassword) {
       throw new Error("Invalid password");
     }
 
     console.log("✅ User authenticated successfully!");
-    return { id: user.id, email: user.email, name: user.name };
+    return { email: user.email, name: user.name };
   } catch (error) {
     console.error("❌ Authentication failed:", error);
     return null;
   }
 }
 
+// Test Redis Connection
 async function testConnection() {
   try {
-    console.log("🔍 Testing connection to Couchbase...");
-
-    const cluster = await connectDB();
-
-    if (cluster) {
-      console.log("✅ Successfully connected to Couchbase!");
-    } else {
-      console.error("❌ Failed to connect to Couchbase. No cluster object returned.");
-    }
+    console.log("🔍 Testing connection to Redis...");
+    await connectDB();
+    console.log("✅ Successfully connected to Redis!");
   } catch (error) {
     console.error("❌ Connection test failed:", error);
   }
 }
 
-module.exports = {
+export {
   connectDB,
-  getProductsCollection,
-  getUserCollection,
   addProduct,
   updateProduct,
   deleteProduct,
   registerUser,
   authenticateUser,
+  testConnection,
 };
