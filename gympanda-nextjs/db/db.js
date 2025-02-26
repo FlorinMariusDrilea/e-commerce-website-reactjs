@@ -161,6 +161,28 @@ async function authenticateUser(email, password) {
   }
 }
 
+async function updateAccountName(email, newName) {
+  try {
+    const client = await connectDB();
+    const userKey = `user:${email}`;
+
+    // Check if the user exists
+    const user = await client.hGetAll(userKey);
+    if (!user || Object.keys(user).length === 0) {
+      throw new Error("User not found");
+    }
+
+    // Update the user's name in Redis
+    await client.hSet(userKey, 'name', newName); // Update the name field
+
+    console.log(`✅ User name updated successfully for ${email}`);
+    return { email, name: newName };  // Return updated user info
+  } catch (error) {
+    console.error("❌ Failed to update account name:", error);
+    return null;
+  }
+}
+
 // Test Redis Connection
 async function testConnection() {
   try {
@@ -181,6 +203,7 @@ export {
   updateProduct,
   deleteProduct,
   registerUser,
+  updateAccountName,
   authenticateUser,
   testConnection,
 };
