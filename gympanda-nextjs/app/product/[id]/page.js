@@ -1,47 +1,60 @@
-import { notFound } from "next/navigation";
+'use client';
 
-const fetchWithTimeout = async (url, options = {}, timeout = 10000) => {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeout);
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { notFound } from 'next/navigation';
+import { use } from 'react';  // Import the use hook to unwrap the Promise
 
-  try {
-    const res = await fetch(url, { ...options, signal: controller.signal });
-    clearTimeout(timeoutId);
-    return res;
-  } catch (error) {
-    if (error.name === "AbortError") {
-      console.error("Request timed out");
-    } else {
-      console.error("Error fetching data:", error);
+const ProductPage = ({ params }) => {
+  // Unwrap params using React.use()
+  const { id } = use(params);
+
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const router = useRouter();
+
+  // Fetch product data
+  useEffect(() => {
+    if (!id) {
+      setError('Product ID is missing');
+      setLoading(false);
+      return;
     }
-    return null;
+
+    const fetchProduct = async () => {
+      try {
+        const res = await fetch(`/api/product/${id}`);
+        if (!res.ok) throw new Error('Failed to fetch product');
+        const data = await res.json();
+        setProduct(data);
+      } catch (err) {
+        setError(err.message);
+        console.error('Error fetching product:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProduct();
+  }, [id]);
+
+  // Handle not found
+  if (!id || error) {
+    return notFound();
   }
-};
 
-// Fetch product from API
-const fetchProduct = async (id) => {
-  try {
-    const res = await fetchWithTimeout(`${process.env.NEXTAUTH_URL}/api/product/${id}`, {
-      cache: "no-store",
-    });
-
-    if (!res || !res.ok) return null;
-    return res.json();
-  } catch (error) {
-    console.error("Error fetching product from API:", error);
-    return null;
+  // Loading state
+  if (loading) {
+    return <div className="text-center text-2xl py-10">Loading product...</div>;
   }
-};
 
-export default async function ProductPage({ params }) {
-  const { id } = params;
+  // Product not found
+  if (!product) {
+    return notFound();
+  }
 
-  if (!id) return notFound();
-
-  const product = await fetchProduct(id);
-  if (!product) return notFound();
-
-  console.log("Product fetched successfully:", product);
+  console.log('Product fetched successfully:', product);
 
   return (
     <div className="max-w-6xl mx-auto p-6">
@@ -68,8 +81,8 @@ export default async function ProductPage({ params }) {
           {/* Price & Stock */}
           <div className="mt-6">
             <p className="text-3xl font-bold text-orange-600">${product.data.price}</p>
-            <span className={product.data.quantity > 0 ? "text-green-600 font-medium text-lg" : "text-red-500 font-medium text-lg"}>
-              {product.data.quantity > 0 ? "In Stock" : "Out of Stock"}
+            <span className={product.data.quantity > 0 ? 'text-green-600 font-medium text-lg' : 'text-red-500 font-medium text-lg'}>
+              {product.data.quantity > 0 ? 'In Stock' : 'Out of Stock'}
             </span>
           </div>
 
@@ -94,4 +107,6 @@ export default async function ProductPage({ params }) {
       </div>
     </div>
   );
-}
+};
+
+export default ProductPage;

@@ -1,8 +1,16 @@
+// Polyfill performance for the Edge environment
+if (typeof performance === 'undefined') {
+  globalThis.performance = {
+    now: () => Date.now(), // Fallback to Date.now()
+  };
+}
+
 import arcjet, { createMiddleware, detectBot, tokenBucket } from "@arcjet/next";
 
 // Define which routes the middleware should apply to
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|healthz).*)"],
+  runtime: 'nodejs', // Ensure Edge runtime
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|healthz).*)"], // Apply to all routes except for these
 };
 
 // Set up Arcjet with the desired rules
