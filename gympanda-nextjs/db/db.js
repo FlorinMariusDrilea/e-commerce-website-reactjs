@@ -1,5 +1,5 @@
 import { createClient } from "redis";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import { v4 as uuidv4 } from "uuid";
 
 let redisClient = null;
@@ -16,12 +16,85 @@ async function connectDB() {
   return redisClient;
 }
 
+async function getProduct(id) {
+  try {
+    const client = await connectDB();
+    const product = await client.hGetAll(`product:${id}`);
+
+    if (!product || Object.keys(product).length === 0) {
+      throw new Error("Product not found");
+    }
+
+    console.log("✅ Product retrieved successfully:", product);
+    return product;
+  } catch (error) {
+    console.error("❌ Failed to retrieve product:", error);
+    return null;
+  }
+}
+
+async function getAllProducts() {
+  try {
+    const client = await connectDB();
+    // Assuming your products are stored with keys like 'product:1', 'product:2', etc.
+    const keys = await client.keys('product:*');
+
+    if (!keys || keys.length === 0) {
+      throw new Error("No products found");
+    }
+
+    // Fetch all product data
+    const products = await Promise.all(
+      keys.map(async (key) => {
+        const product = await client.hGetAll(key);
+        return product;
+      })
+    );
+
+    console.log("✅ Products retrieved successfully:", products);
+    return products;
+  } catch (error) {
+    console.error("❌ Failed to retrieve products:", error);
+    return null;
+  }
+}
+
+async function getProductIdFromJson(productJson) {
+  try {
+    const client = await connectDB();
+    const keys = await client.keys('product:*'); // Get all product keys
+
+    // Loop through each product key to find a match based on the JSON data
+    for (const key of keys) {
+      const product = await client.hGetAll(key);
+      
+      // You can check based on any specific attribute of the product
+      // Example here compares the name and description to find the match
+      if (
+        product.name === productJson.name &&
+        product.description === productJson.description &&
+        product.price === productJson.price // Add more comparisons if necessary
+      ) {
+        const id = key.split(':')[1]; // Extract the product ID from the key
+        return id;
+      }
+    }
+
+    // If no matching product is found
+    console.log("❌ Product not found");
+    return null;
+  } catch (error) {
+    console.error("❌ Error retrieving product ID:", error);
+    return null;
+  }
+}
+
 // Add Product to Redis
 async function addProduct(name, price, description, quantity, image) {
   try {
     const client = await connectDB();
     const id = uuidv4();
-    const product = { name, price, description, quantity, image };
+    const product = { id, name, price, description, quantity, image };
     await client.hSet(`product:${id}`, product);
     console.log("✅ Product added successfully with ID:", id);
   } catch (error) {
@@ -102,6 +175,9 @@ async function testConnection() {
 export {
   connectDB,
   addProduct,
+  getProduct,
+  getAllProducts,
+  getProductIdFromJson,
   updateProduct,
   deleteProduct,
   registerUser,

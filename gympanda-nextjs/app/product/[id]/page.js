@@ -1,12 +1,31 @@
 import { notFound } from "next/navigation";
 
+const fetchWithTimeout = async (url, options = {}, timeout = 10000) => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+  try {
+    const res = await fetch(url, { ...options, signal: controller.signal });
+    clearTimeout(timeoutId);
+    return res;
+  } catch (error) {
+    if (error.name === "AbortError") {
+      console.error("Request timed out");
+    } else {
+      console.error("Error fetching data:", error);
+    }
+    return null;
+  }
+};
+
 // Fetch product from API
 const fetchProduct = async (id) => {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/product/${id}`, {
+    const res = await fetchWithTimeout(`${process.env.NEXTAUTH_URL}/api/product/${id}`, {
       cache: "no-store",
     });
-    if (!res.ok) return null;
+
+    if (!res || !res.ok) return null;
     return res.json();
   } catch (error) {
     console.error("Error fetching product from API:", error);
@@ -14,68 +33,49 @@ const fetchProduct = async (id) => {
   }
 };
 
-// Fallback: Fetch product from local JSON file
-const fetchProductFromJson = async (id) => {
-  try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/products.json`);
-    if (!res.ok) throw new Error("Failed to load local products.json");
-
-    const data = await res.json();
-    if (!Array.isArray(data)) return null;
-
-    return data.find((item) => item.id === id) || null;
-  } catch (error) {
-    console.error("Error fetching product from JSON:", error);
-    return null;
-  }
-};
-
 export default async function ProductPage({ params }) {
-  const { id } = params; // No need for `await`
+  const { id } = params;
+
   if (!id) return notFound();
 
-  let product = await fetchProduct(id);
-  if (!product) {
-    console.warn("Falling back to local JSON...");
-    product = await fetchProductFromJson(id);
-  }
+  const product = await fetchProduct(id);
+  if (!product) return notFound();
 
-  if (!product) return notFound(); // Ensure product exists
+  console.log("Product fetched successfully:", product);
 
   return (
     <div className="max-w-6xl mx-auto p-6">
-      {/* Product Layout */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
         {/* Product Image */}
         <div className="relative">
           <img
-            src={product.image ? `/${product.image}` : "/default-image.jpg"}
-            alt={product.name}
+            src={product.data.image}
+            alt={product.data.name}
             className="w-full h-[500px] object-cover rounded-lg shadow-lg"
           />
-          {product.quantity > 0 && product.quantity < 3 && (
+          {product.data.quantity > 0 && product.data.quantity < 3 && (
             <div className="absolute top-4 left-4 bg-red-600 text-white text-xs font-semibold px-3 py-1 rounded-md">
-              Hurry! Only {product.quantity} left!
+              Hurry! Only {product.data.quantity} left!
             </div>
           )}
         </div>
 
         {/* Product Info */}
         <div className="flex flex-col justify-center text-center">
-          <h1 className="text-4xl font-extrabold mb-4 text-gray-900">{product.name}</h1>
-          <p className="text-gray-600 text-lg">{product.description}</p>
+          <h1 className="text-4xl font-extrabold mb-4 text-gray-900">{product.data.name}</h1>
+          <p className="text-gray-600 text-lg">{product.data.description}</p>
 
           {/* Price & Stock */}
           <div className="mt-6">
-            <p className="text-3xl font-bold text-orange-600">${product.price}</p>
-            <span className={product.quantity > 0 ? "text-green-600 font-medium text-lg" : "text-red-500 font-medium text-lg"}>
-              {product.quantity > 0 ? "In Stock" : "Out of Stock"}
+            <p className="text-3xl font-bold text-orange-600">${product.data.price}</p>
+            <span className={product.data.quantity > 0 ? "text-green-600 font-medium text-lg" : "text-red-500 font-medium text-lg"}>
+              {product.data.quantity > 0 ? "In Stock" : "Out of Stock"}
             </span>
           </div>
 
           {/* Add to Cart */}
           <div className="mt-4">
-            {product.quantity > 0 ? (
+            {product.data.quantity > 0 ? (
               <button className="w-full bg-orange-500 text-white py-3 px-6 rounded-lg text-lg font-semibold hover:bg-orange-700 transition">
                 🛒 Add to Cart
               </button>

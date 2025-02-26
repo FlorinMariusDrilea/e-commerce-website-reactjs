@@ -1,12 +1,15 @@
-'use client'
+'use client';
 import { FaUsers, FaRunning, FaDumbbell } from 'react-icons/fa';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react'; // Import useSession
 
 const About = () => {
+  const { data: session } = useSession(); // Get session data
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       {/* Header Section */}
-      <div className="text-center mb-16" >
+      <div className="text-center mb-16">
         <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-4">
           Welcome to GymPanda
         </h1>
@@ -53,20 +56,23 @@ const About = () => {
       </div>
 
       {/* Call to Action Section */}
-      <div className="text-center bg-gray-50 rounded-2xl p-10 mb-16 shadow-xl hover:shadow-sm transition-all">
-        <h2 className="text-gray-800 text-3xl font-bold mb-6">
-          Join the GymPanda Movement
-        </h2>
-        <p className="text-gray-600 mb-6">
-          Ready to take your fitness journey to the next level? Join thousands of like-minded athletes and discover the power of GymPanda gear that moves with you.
-        </p>
-        <Link 
-          href="/auth/register" 
-          className="bg-orange-600 text-white px-10 py-4 rounded-lg font-semibold hover:bg-orange-700 transition-colors inline-block"
-        >
-          Get Started Today
-        </Link>
-      </div>
+        {/* Conditionally render the button based on session */}
+        {!session && (
+        <div className="text-center bg-gray-50 rounded-2xl p-10 mb-16 shadow-xl hover:shadow-sm transition-all">
+          <h2 className="text-gray-800 text-3xl font-bold mb-6">
+            Join the GymPanda Movement
+          </h2>
+          <p className="text-gray-600 mb-6">
+            Ready to take your fitness journey to the next level? Join thousands of like-minded athletes and discover the power of GymPanda gear that moves with you.
+          </p>
+          <Link 
+            href="/auth/register" 
+            className="bg-orange-600 text-white px-10 py-4 rounded-lg font-semibold hover:bg-orange-700 transition-colors inline-block"
+          >
+            Get Started Today
+          </Link>
+        </div>
+        )}
     </div>
   );
 };

@@ -2,7 +2,7 @@ import bcrypt from "bcrypt";
 import Redis from "ioredis";
 
 // Create a Redis client using the provided Redis URL
-const redisClient = new Redis("redis://default:zH4SCG9iIIasY6riA5H55a2mgRJ1xCeq@redis-18983.c2.eu-west-1-3.ec2.redns.redis-cloud.com:18983");
+const redisClient = new Redis(process.env.REDIS_URL);
 
 // Function to handle the response
 function handleResponse(statusCode, message) {

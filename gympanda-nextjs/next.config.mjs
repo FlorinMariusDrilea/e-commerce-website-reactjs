@@ -1,9 +1,19 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   webpack: (config, { isServer }) => {
-    if (isServer) {
-      config.externals = [...config.externals, 'couchbase']; // Add couchbase to externals on server-side
+    // Exclude 'net' and 'tls' when building for the client
+    if (!isServer) {
+      config.resolve.fallback = {
+        net: false,
+        tls: false,
+      };
     }
+
+    // Add couchbase to externals on server-side
+    if (isServer) {
+      config.externals = [...config.externals, 'couchbase'];
+    }
+
     return config;
   },
   env: {

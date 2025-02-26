@@ -15,7 +15,7 @@ export async function POST(req) {
   try {
     const { name, price, description, quantity, image } = await req.json();
 
-    if (!name || !price || !description || !quantity) {
+    if (!name || !price || !description) {
       return new Response(JSON.stringify({ error: "Missing required fields" }), {
         status: 400,
         headers: { "Content-Type": "application/json" },
