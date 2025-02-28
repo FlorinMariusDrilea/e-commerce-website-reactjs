@@ -3,12 +3,15 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { signIn } from "next-auth/react";
 import { FaGoogle, FaUserPlus } from "react-icons/fa";
 
 export default function SignUp() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [birthday, setBirthday] = useState("");  // New field
+  const [sex, setSex] = useState("");  // New field
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
@@ -22,14 +25,14 @@ export default function SignUp() {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ name, email, password, birthday, sex }),  // Sending new fields
       });
 
       if (!res.ok) {
         throw new Error(await res.text());
       }
 
-      router.push("/auth/signin"); // Redirect to Sign In
+      router.push("/auth/signin");
     } catch (err) {
       setError(err.message);
     } finally {
@@ -42,20 +45,6 @@ export default function SignUp() {
       <div className="bg-white dark:bg-gray-800 shadow-lg rounded-xl p-8 w-full max-w-md">
         <h1 className="text-2xl font-semibold text-gray-900 dark:text-white text-center">Create an Account</h1>
         <p className="text-gray-500 dark:text-gray-400 text-center mt-2">Sign up to get started</p>
-
-        {/* Google Sign-Up */}
-        <button
-          onClick={() => signIn("google")}
-          className="mt-6 flex items-center justify-center w-full bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-600 transition"
-        >
-          <FaGoogle className="mr-2" /> Sign up with Google
-        </button>
-
-        <div className="flex items-center my-6">
-          <div className="flex-1 border-t border-gray-300 dark:border-gray-600"></div>
-          <p className="px-3 text-gray-500 dark:text-gray-400">or</p>
-          <div className="flex-1 border-t border-gray-300 dark:border-gray-600"></div>
-        </div>
 
         {/* Email & Password Sign-Up */}
         <form onSubmit={handleSubmit}>
@@ -90,6 +79,34 @@ export default function SignUp() {
               className="w-full mt-1 p-2 border rounded-lg bg-gray-100 dark:bg-gray-700 dark:text-white focus:ring focus:ring-orange-400"
               required
             />
+          </div>
+
+          {/* Birthday Field */}
+          <div className="mb-4">
+            <label className="block text-gray-700 dark:text-gray-300">Birthday</label>
+            <input
+              type="date"
+              value={birthday}
+              onChange={(e) => setBirthday(e.target.value)}
+              className="w-full mt-1 p-2 border rounded-lg bg-gray-100 dark:bg-gray-700 dark:text-white focus:ring focus:ring-orange-400"
+              required
+            />
+          </div>
+
+          {/* Sex Field */}
+          <div className="mb-4">
+            <label className="block text-gray-700 dark:text-gray-300">Sex</label>
+            <select
+              value={sex}
+              onChange={(e) => setSex(e.target.value)}
+              className="w-full mt-1 p-2 border rounded-lg bg-gray-100 dark:bg-gray-700 dark:text-white focus:ring focus:ring-orange-400"
+              required
+            >
+              <option value="">Select</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
           </div>
 
           {error && <p className="text-red-500 text-sm mb-4">{error}</p>}

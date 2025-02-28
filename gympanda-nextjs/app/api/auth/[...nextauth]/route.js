@@ -45,7 +45,9 @@ export const authOptions = {
       if (user) {
         token.id = user.id;
         token.email = user.email;
-        token.name = user.name || ""; // Set the user's name, if available
+        token.name = user.name || "";
+        token.birthday = user.birthday || "";
+        token.sex = user.sex || "";
       }
       return token;
     },
@@ -53,9 +55,9 @@ export const authOptions = {
     // Called when a session is created or updated
     async session({ session, token }) {
       // Map token info to session's user object
-      session.user.id = token.id;
-      session.user.email = token.email;
       session.user.name = token.name;
+      session.user.birthday = token.birthday;
+      session.user.sex = token.sex;
       return session;
     }
   },

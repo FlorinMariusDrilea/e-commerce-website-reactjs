@@ -1,36 +1,54 @@
-import { getServerSession } from 'next-auth';
-import { authOptions } from '../auth/[...nextauth]/route';  // Ensure correct path
-import { NextResponse } from 'next/server';
-import { updateAccountName } from '../../../db/db'; // Assuming you have a method to update the account
+import { getServerSession } from "next-auth";
+import { authOptions } from "../auth/[...nextauth]/route";
+import { NextResponse } from "next/server";
+import { updateAccount } from "../../../db/db";
 
 export async function PUT(req) {
   try {
-    // Get the session on the server side
+    // Retrieve the session
     const session = await getServerSession(authOptions);
 
-    // Check if the session exists
+    // Check if the user is authenticated
     if (!session) {
-      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    const { name } = await req.json();
+    // Parse the request body
+    const { name, birthday, sex } = await req.json();
 
-    if (!name) {
-      return NextResponse.json({ message: 'Name is required' }, { status: 400 });
+    // Validate that at least one field is provided
+    if (!name && !birthday && !sex) {
+      return NextResponse.json(
+        { message: "At least one field (name, birthday, sex) is required" },
+        { status: 400 }
+      );
     }
 
-    // Proceed with updating the account name
+    // Get the user's email from the session (this assumes the session contains the user's email)
     const userEmail = session.user.email;
-    const updatedUser = await updateAccountName(userEmail, name);
 
+    // Attempt to update the account with the provided information
+    const updatedUser = await updateAccount(userEmail, name, birthday, sex);
+
+    // Handle the case where the update failed
     if (!updatedUser) {
-      return NextResponse.json({ message: 'Failed to update account name' }, { status: 500 });
+      return NextResponse.json({ message: "Failed to update account" }, { status: 500 });
     }
 
-    return NextResponse.json({ message: 'Account name updated successfully' }, { status: 200 });
+    // Return a success response with the updated user data
+    return NextResponse.json(
+      { message: "Account updated successfully", user: updatedUser },
+      { status: 200 }
+    );
 
   } catch (error) {
-    console.error('Error:', error);
-    return NextResponse.json({ message: 'Internal Server Error', error: error.message }, { status: 500 });
+    // Log the error for debugging
+    console.error("❌ Update error:", error);
+
+    // Return a response indicating an internal server error
+    return NextResponse.json(
+      { message: "Internal Server Error", error: error.message },
+      { status: 500 }
+    );
   }
 }

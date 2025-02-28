@@ -1,18 +1,32 @@
 'use client';
 
-import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { useState, useEffect } from "react";
+import { signIn, useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { FaGoogle, FaEnvelope } from "react-icons/fa";
 
 export default function SignIn() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  // Redirect if user is already authenticated
+  useEffect(() => {
+    if (status === "authenticated") {
+      router.push("/");
+    }
+  }, [status, router]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     await signIn("credentials", { email, password, redirect: true, callbackUrl: "/" });
   };
+
+  if (status === "loading") {
+    return <p className="text-center">Checking authentication...</p>;
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-orange-50 dark:bg-gray-900 px-6">
@@ -22,7 +36,7 @@ export default function SignIn() {
 
         {/* Google Sign-in */}
         <button
-          onClick={() => signIn("google")}
+          onClick={() => signIn("google", { callbackUrl: "/" })}
           className="mt-6 flex items-center justify-center w-full bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-600 transition"
         >
           <FaGoogle className="mr-2" /> Sign in with Google

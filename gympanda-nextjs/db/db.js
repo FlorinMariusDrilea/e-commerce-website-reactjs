@@ -36,7 +36,6 @@ async function getProduct(id) {
 async function getAllProducts() {
   try {
     const client = await connectDB();
-    // Assuming your products are stored with keys like 'product:1', 'product:2', etc.
     const keys = await client.keys('product:*');
 
     if (!keys || keys.length === 0) {
@@ -68,14 +67,12 @@ async function getProductIdFromJson(productJson) {
     for (const key of keys) {
       const product = await client.hGetAll(key);
       
-      // You can check based on any specific attribute of the product
-      // Example here compares the name and description to find the match
       if (
         product.name === productJson.name &&
         product.description === productJson.description &&
-        product.price === productJson.price // Add more comparisons if necessary
+        product.price === productJson.price
       ) {
-        const id = key.split(':')[1]; // Extract the product ID from the key
+        const id = key.split(':')[1];
         return id;
       }
     }
@@ -126,12 +123,23 @@ async function updateProduct(id, name, price, description, quantity, image) {
 }
 
 // Register User in Redis
-async function registerUser(email, name, password) {
+async function registerUser(email, name, password, birthday, sex) {
   try {
     const client = await connectDB();
     const hashedPassword = await bcrypt.hash(password, 10);
-    const userId = `user:${email}`;
-    await client.hSet(userId, { email, name, password: hashedPassword });
+    const userId = `user:${email}`; // Unique identifier for each user
+
+    // Create a user object similar to the product structure
+    const user = {
+      email,
+      name,
+      password: hashedPassword,
+      birthday,
+      sex
+    };
+
+    // Store user details in a Redis hash with the userId
+    await client.hSet(userId, user);
     console.log("✅ User registered successfully!");
   } catch (error) {
     console.error("❌ Failed to register user:", error);
@@ -154,14 +162,20 @@ async function authenticateUser(email, password) {
     }
 
     console.log("✅ User authenticated successfully!");
-    return { email: user.email, name: user.name };
+    return { 
+      email: user.email, 
+      name: user.name,
+      birthday: user.birthday,
+      sex: user.sex
+    };
   } catch (error) {
     console.error("❌ Authentication failed:", error);
     return null;
   }
 }
 
-async function updateAccountName(email, newName) {
+// Update Account Details
+async function updateAccount(email, newName, newBirthday, newSex) {
   try {
     const client = await connectDB();
     const userKey = `user:${email}`;
@@ -172,13 +186,30 @@ async function updateAccountName(email, newName) {
       throw new Error("User not found");
     }
 
-    // Update the user's name in Redis
-    await client.hSet(userKey, 'name', newName); // Update the name field
+    // Check if the new fields are different from the existing fields
+    const isNameChanged = newName !== undefined && newName !== user.name;
+    const isBirthdayChanged = newBirthday !== undefined && newBirthday !== user.birthday;
+    const isSexChanged = newSex !== undefined && newSex !== user.sex;
 
-    console.log(`✅ User name updated successfully for ${email}`);
-    return { email, name: newName };  // Return updated user info
+    // If no fields are changed, return the existing user data
+    if (!isNameChanged && !isBirthdayChanged && !isSexChanged) {
+      console.log("✅ No changes detected. User details remain unchanged.");
+      return { email, name: user.name, birthday: user.birthday, sex: user.sex };
+    }
+
+    // Prepare the fields to update
+    const fieldsToUpdate = {};
+    if (isNameChanged) fieldsToUpdate.name = newName;
+    if (isBirthdayChanged) fieldsToUpdate.birthday = newBirthday;
+    if (isSexChanged) fieldsToUpdate.sex = newSex;
+
+    // Update user fields in Redis
+    await client.hSet(userKey, fieldsToUpdate);
+
+    console.log("✅ User details updated successfully!");
+    return { email, name: newName || user.name, birthday: newBirthday || user.birthday, sex: newSex || user.sex };
   } catch (error) {
-    console.error("❌ Failed to update account name:", error);
+    console.error("❌ Failed to update user:", error.message || error);
     return null;
   }
 }
@@ -203,7 +234,7 @@ export {
   updateProduct,
   deleteProduct,
   registerUser,
-  updateAccountName,
+  updateAccount,
   authenticateUser,
   testConnection,
 };
