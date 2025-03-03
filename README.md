@@ -1,4 +1,4 @@
-# GymPanda - Premium Gym Shop Project ( https://e-commerce-website-reactjs-emcl0ckau-florins-projects-a5491ef9.vercel.app/ )
+# GymPanda - Premium Gym Shop Project ( https://gym-panda.vercel.app/ )
 
 ## Overview
 GymPanda is an e-commerce platform offering high-quality gym wear designed for performance, comfort, and style. This project is built using **Next.js**, **React**, and **Tailwind CSS**, ensuring a modern and scalable web application.
