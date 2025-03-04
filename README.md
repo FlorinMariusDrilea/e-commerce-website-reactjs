@@ -13,7 +13,7 @@ GymPanda is an e-commerce platform offering high-quality gym wear designed for p
 ## Tech versions to use
 - node V.18
 - npm V.9.8.1
-- couchbase V.7.1.4
+- redis
 
 ## Tech Stack
 - **Frontend**: React.js, Next.js, Tailwind CSS
@@ -23,9 +23,9 @@ GymPanda is an e-commerce platform offering high-quality gym wear designed for p
 ## Getting Started
 ### Prerequisites
 Ensure you have **Node.js** and **npm/yarn** installed.
-Ensure you have **Docker** installed as well, for couchbase.
+Ensure you have **Docker** installed as well, for database.
 
-### Installation
+### Installation and run project locally
 1. Clone the repository:
    ```bash
    git clone https://github.com/FlorinMariusDrilea/e-commerce-website-reactjs.git
@@ -34,33 +34,59 @@ Ensure you have **Docker** installed as well, for couchbase.
    ```bash
    cd e-commerce-website-reactjs
    ```
-3. Install dependencies:
+3. Use node v18:
+   ```bash
+   nvm use 18
+   ```
+4. Install dependencies:
    ```bash
    npm install
    # or
    yarn install
    ```
+5. Create / Spin up a redis db locally to be used:
 
-### Running the Project (locally)
-Start the couchbase instance:
-```bash
-make start_couchbase
-```
-
-Start the development server:
+6. Start the development server:
 ```bash
 npm run dev
 # or
 yarn dev
 ```
+
+## Redis
+- Install redis and use it
+```bash
+brew tap redis-stack/redis-stack
+brew install --cask redis-stack
+
+redis-stack-server
+```
+
+Or use Makefile to create a docker instance of redis
+- make start_redis
+
+- Download and install Redis Insight to get a view of your redis db / structures
+- Connect to the db (locally): 127.0.0.1:6379
+
+```bash
+REDIS_URL=redis://default@127.0.0.1:6379
+```
+
+## NEXT_AUTH environment variables locally
+```bash
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=QCS2g7ZGlHIBNGa5Qw94on1NqKa2W2gSOoWOKQvwAf4=
+```
+
 The project should be accessible at **http://localhost:3000**.
-The couchbase instance should be available at **http://localhost:8091**.
 
 ## Project Structure
 ```
 📦 gympanda-nextjs
 ├── 📂 app                  # Next.js application files
 │   ├── 📂 about            # About page
+│   ├── 📂 account          # Edit account page
+│   ├── 📂 add-product      # Edit product page (add/remove)
 │   ├── 📂 api              # API routes
 │   ├── 📂 auth             # Authentication routes
 │   │   ├── 📂 register     # Registration page
@@ -81,9 +107,8 @@ The couchbase instance should be available at **http://localhost:8091**.
 │   └── 📄 db.js            # Database setup
 ├── 📂 public               # Static assets (images, favicon, etc.)
 ├── 📂 styles               # Global styles and Tailwind setup
+├── 📂 middleware           # Middleware stuff for protection and cache
 │   └── 📄 globals.css      # Global CSS file
-├── 📄 .env.local           # Local environment variables
-├── 📄 .env.prod            # Production environment variables
 ├── 📄 .gitignore           # Git ignore file
 ├── 📄 jsconfig.json        # JavaScript configuration
 ├── 📄 jsonflg.json         # JSON configuration file
@@ -104,7 +129,7 @@ Create build for production:
 npm run build
 ```
 
-Deploy to Vercel:
+Deploy to Vercel (Already deployed):
 ```bash
 vercel
 ```
