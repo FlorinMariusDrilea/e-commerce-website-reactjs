@@ -33,7 +33,7 @@ export default function Navbar() {
 
         {/* Icons & Authentication Button */}
         <div className="flex space-x-6 items-center">
-          <Link href="/">
+          <Link href="/cart">
             <FaShoppingCart className="cursor-pointer hover:text-orange-600 transition" size={22} />
           </Link>
 

@@ -33,18 +33,45 @@ const ShopPage = () => {
     if (!confirm("Are you sure you want to delete this product?")) return;
   
     try {
+      setLoading(true);  // Show loading spinner while deleting
       await fetch(`/api/product`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id }), // Send ID in request body
       });
     
-      window.location.reload(); // Refresh the page after successful deletion
+      setProducts(products.filter(product => product.id !== id)); // Remove from state after deletion
+      setLoading(false);
     } catch (error) {
       console.error("Error deleting product:", error);
       setError("Failed to delete product");
+      setLoading(false);
     }
   };
+
+  // Add to Cart Function
+  const addToCart = async (product) => {
+    try {
+      const response = await fetch('/api/cart', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: product.id,
+          name: product.name,
+          price: product.price,
+        }),
+      });
+  
+      if (response.ok) {
+        alert('Added to cart');
+      } else {
+        const errorData = await response.json();
+        alert(`Error: ${errorData.error}`);
+      }
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+    }
+  };  
 
   if (loading) return <div className="text-center text-2xl py-10">Loading products...</div>;
 
@@ -72,7 +99,7 @@ const ShopPage = () => {
         )}
 
         {/* Product Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md-grid-cols-3 lg:grid-cols-4 gap-8">
           {products.map((product) => (
             <div 
               key={product.id} 
@@ -115,7 +142,7 @@ const ShopPage = () => {
                   {product.quantity > 0 ? (
                     <div className="flex space-x-6">
                       <Link href={`/product/${product.id}`} className="bg-orange-500 hover:bg-orange-700 text-white py-2 px-3 rounded-lg shadow-md">Buy Now</Link>
-                      <button onClick={() => alert('Added to cart')} className="bg-gray-800 hover:bg-gray-700 text-white py-2 px-3 rounded-lg shadow-md">Add to Cart</button>
+                      <button onClick={() => addToCart(product)} className="bg-gray-800 hover:bg-gray-700 text-white py-2 px-3 rounded-lg shadow-md">Add to Cart</button>
                     </div>
                   ) : (
                     <div className="text-center text-sm text-gray-500 mt-4">Out of Stock</div>
